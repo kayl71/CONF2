@@ -4,4 +4,8 @@ version = '0.2.0'
 edition = '2008'
 
 [dependencies]
+<<<<<<< HEAD
 base = '1.0.0'
+=======
+base = '1.0.0'
+>>>>>>> graphiz
