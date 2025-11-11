@@ -15,21 +15,6 @@ class XML_parser:
     def add_value(self, key, value):
         self.tree.getroot().set(key, value)
         ET.dump(self.tree)
-import os
-import re
-
-class XML_parser:
-    def __init__(self, file_name):
-        self.tree = ET.parse(file_name)
-
-    def change_value(self, key, new_value):
-        for name in self.tree.findall(".//" + key):
-            name.text = new_value
-        ET.dump(self.tree)
-        
-    def add_value(self, key, value):
-        self.tree.getroot().set(key, value)
-        ET.dump(self.tree)
 
     def get_value(self, key):
         finded_tags = self.tree.findall(".//"+key)
@@ -43,7 +28,6 @@ class XML_parser:
         return None
 
 class Graphviz_manager:
-
     def __init__(self):
         pass
 
@@ -209,10 +193,8 @@ package_parser = Package_parser("packages")
 graph_manager = Graph_manager(package_parser)
 graphviz = Graphviz_manager()
 
-test_depencies = [(('c', '0.7.0'), ('base', '1.2.0')), (('c', '0.7.0'), ('a', '0.2.0')), (('a', '0.2.0'), ('base', '1.0.0'))]
+test_depencies = graph_manager.get_array_dependecies_from_package_to_level('c', '0.7.0', 3)
 graphviz.create_graph("Graph", test_depencies)
-print(graph_manager.get_array_dependecies_from_package_to_level('c', '0.7.0', 3))
-
 
 # tree = ET.parse(file)
 # for key in keys:
