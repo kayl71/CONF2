@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<params>
-    <package_name>syn</package_name>
-    <url>https://crates.io/crates/syn</url>
-    <mode_test_dir>MODE_TEST_DIR</mode_test_dir>
-    <file_name_graph>FILE_NAME_GRAPH</file_name_graph>
-    <mode_output>MODE_OUTPUT</mode_output>
-</params>

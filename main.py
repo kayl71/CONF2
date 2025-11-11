@@ -2,6 +2,8 @@ import xml.etree.ElementTree as ET
 import os
 import re
 from graphviz import Digraph
+from anytree import Node, RenderTree
+from anytree.exporter import DotExporter
 
 class XML_parser:
     def __init__(self, file_name):
@@ -56,17 +58,37 @@ class Graphviz_manager:
             dot.edge(node_from_key, node_to_key)
         dot.render('test-output/'+graph_name+'.gv', view=True)  # Сохранит и откроет PDF
 
+    def print_ascii_tree(self, dependecies):
+        if len(dependecies) == 0:
+            return
+        
+        def node_text(node):
+            return node[0] + '_' + node[1]
+        nodes_dict = {}
+        
+        root = Node(node_text(dependecies[0][0]))
+        nodes_dict[node_text(dependecies[0][0])] = root
+        for item in dependecies:
+            node_from = item[0]
+            node_to = item[1]
+            
+            nodes_dict[node_text(node_to)] =  Node(node_text(node_to), nodes_dict[node_text(node_from)])
+
+        for pre, fill, node in RenderTree(root):
+            print(f"{pre}{node.name}")
 
 
 class Package_parser:
     def __init__(self, dir_packages_path):
         self.dir_packages = {}
         self.dir_packages_dependecies = {}
+        self.dir_packages_path = dir_packages_path
+        
         all_items_in_dir = os.listdir(dir_packages_path)
         files_only = list([item for item in all_items_in_dir if os.path.isfile(dir_packages_path + "/" + item)])
 
         for package_file in files_only:
-            with open(dir_packages_path+'/'+package_file, 'r') as file:
+            with open(self.dir_packages_path+'/'+package_file, 'r') as file:
                 text = file.read()
                 block_package = self.__get_block_dict__(text, "package")
                 block_dependencies = self.__get_block_dict__(text, "dependencies")
@@ -109,18 +131,15 @@ class Package_parser:
     
     def _get_package_last_version_(self, package_name):
         last_version = '0.0.0'
-        file_name = ""
         for key in self.dir_packages.keys():
             name = key[0]
             version = key[1]
 
             if name == package_name and version > last_version:
                 last_version = version
-                file_name = name
-        if file_name == "":
+        if last_version == "0.0.0":
             return None
-        return self.dir_packages[(file_name, version)]
-
+        return self.dir_packages[package_name, version]
 
     def get_package_info(self, package_name, version = None):
         file_name = ""
@@ -129,7 +148,7 @@ class Package_parser:
         else:
             file_name = self.dir_packages[(package_name, version)]
 
-        with open(self.dir_packages + '/' + file_name) as file:
+        with open(self.dir_packages_path + '/' + file_name) as file:
             text = file.read()
             return self.__get_block_dict__(text, "package")
         
@@ -141,7 +160,7 @@ class Package_parser:
         else:
             file_name = self.dir_packages[(package_name, version)]
 
-        with open(self.dir_packages + '/' + file_name) as file:
+        with open(self.dir_packages_path + '/' + file_name) as file:
             text = file.read()
             return self.__get_block_dict__(text, "dependencies")
     
@@ -178,26 +197,61 @@ class Graph_manager:
         return depencies
     
 
+def Error(error_text : str):
+    print("Error!", error_text)
+
+
+def Graph_Visualization():
+    keys = ["package_name", "package_version", "url", "graph_max_level", "mode_test_dir", "file_name_graph", "mode_output"]
+    config_values = {}
+    config_filename = "config.xml"
+
+    xml_parser = XML_parser(config_filename)
+    for key in keys:
+        config_values[key] = xml_parser.get_value(key)
+
+    package_parser = Package_parser("packages")
+    graph_manager = Graph_manager(package_parser)
+    graphviz = Graphviz_manager()
+
+    name = ""
+    version = ""
+    file_graph_name = config_values['file_name_graph']
+    mode_output = config_values['mode_output']
+    level = config_values['graph_max_level']
+
+    if config_values['mode_test_dir'] == "PACKAGE_NAME":
+        version = config_values['package_version']
+        name = config_values['package_name']
+        if version == "" or version == " ":
+            version = None
+
+        if not package_parser._package_contain_(config_values['package_name'], version):
+            Error("Wrong package name or package version")
+            return 1
+    elif config_values['mode_test_dir'] == 'PACKAGE_URL':
+        url = config_values['url']
+        package = package_parser.get_package_by_filename(url)
+
+        if package:
+            name, version = package
+        else:
+            Error("Wrong url")
+            return 1
+    else:
+        Error("Wrong mode_test_dir value")
+        return 1
+
+    # Visualisation
+    depencies = graph_manager.get_array_dependecies_from_package_to_level(name, version, 3)
+    if mode_output == "ASCII":
+        graphviz.print_ascii_tree(depencies)
+    else:
+        graphviz.create_graph(file_graph_name, depencies)
+    return 0
 
 
 
-
-keys = ["package_name", "url", "mode_test_dir", "file_name_graph", "mode_output"]
-file = "temp.xml"
-value = "value"
-# tree = ET.parse(file)
-# for key in keys:
-#     print(f"{key} : {get_value(tree, key)}")
-
-package_parser = Package_parser("packages")
-graph_manager = Graph_manager(package_parser)
-graphviz = Graphviz_manager()
-
-test_depencies = graph_manager.get_array_dependecies_from_package_to_level('c', '0.7.0', 3)
-graphviz.create_graph("Graph", test_depencies)
-
-# tree = ET.parse(file)
-# for key in keys:
-#     print(f"{key} : {get_value(tree, key)}")
-
-
+return_value = Graph_Visualization()
+if return_value != 0:
+    print("The program did not work correctly!")

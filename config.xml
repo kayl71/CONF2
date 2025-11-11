@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<params>
+    <package_name>d</package_name>
+    <package_version>0.4.0</package_version>
+    <url>d_package</url>
+    <graph_max_level>3</graph_max_level>
+    <mode_test_dir>PACKAGE_NAME</mode_test_dir>
+    <file_name_graph>Graph</file_name_graph>
+    <mode_output>GRAPH</mode_output>
+</params>
