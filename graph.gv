@@ -1,0 +1,4 @@
+digraph MyDirectedGraph {
+    A -> B -> C;
+    B -> D;
+}
